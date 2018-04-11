@@ -41,12 +41,7 @@ def read_file(in_file):
     return mail_adresses
 
 
-def main():
-    comm_args = args()
-    in_file = comm_args.in_file
-    out_file = comm_args.out_file
-    mail_adresses = read_file(in_file)
-    url = "https://gotcha.pw/search/"
+def check_mails(url, in_file, out_file, mail_adresses):
     for num, mail_adress in enumerate(mail_adresses):
         full_path = url + mail_adress
         webpage = crawl_web(full_path)
@@ -55,9 +50,18 @@ def main():
         print(text)
         write_file(out_file, text)
         if num % 5 == 0:
-            time.sleep(30)
+            time.sleep(60)
         else:
             time.sleep(1)
+
+
+def main():
+    comm_args = args()
+    in_file = comm_args.in_file
+    out_file = comm_args.out_file
+    mail_adresses = read_file(in_file)
+    url = "https://gotcha.pw/search/"
+    check_mails(url, in_file, out_file, mail_adresses)
     print("Data written to {}".format(out_file))
     return 0
 
