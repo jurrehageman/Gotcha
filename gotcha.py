@@ -1,6 +1,16 @@
 import sys
 import time
 from urllib.request import Request, urlopen
+import re
+import argparse
+
+
+def args():
+    parser = argparse.ArgumentParser(description="checks if mail address is found in https://gotcha.pw/search/")
+    parser.add_argument("in_file", help="the path to the File with the input")
+    parser.add_argument("out_file", help="the path to the File with the output")
+    args = parser.parse_args()
+    return args
 
 
 def check_if_hacked(webpage):
@@ -16,34 +26,41 @@ def crawl_web(url):
     return webpage
 
 
-def write_file(text):
-    with open('hacked_list.csv', 'a') as f:
+def write_file(out_file, text):
+    with open(out_file, 'a') as f:
         f.write(text + '\n')
 
 
-def read_file():
+def read_file(in_file):
     mail_adresses = []
-    with open('mail.txt') as f:
+    with open(in_file) as f:
         for line in f:
-            line = line.strip().split(';')
-            for i in line:
-                index = i.find('<')
-                mail = i[index:].strip('<>')
-                mail_adresses.append(mail)
+            mail = re.findall(r'[\w\.-]+@[\w\.-]+', line)
+            for i in mail:
+                mail_adresses.append(i)
     return mail_adresses
 
+
 def main():
-    mail_adresses = read_file()
+    comm_args = args()
+    in_file = comm_args.in_file
+    out_file = comm_args.out_file
+    mail_adresses = read_file(in_file)
     url = "https://gotcha.pw/search/"
-    for mail_adress in mail_adresses:
+    for num, mail_adress in enumerate(mail_adresses):
         full_path = url + mail_adress
         webpage = crawl_web(full_path)
         hacked = check_if_hacked(webpage)
         text = '{};hacked:;{}'.format(mail_adress, hacked)
         print(text)
-        write_file(text)
-        time.sleep(10)
+        write_file(out_file, text)
+        if num % 5 == 0:
+            time.sleep(30)
+        else:
+            time.sleep(1)
+    print("Data written to {}".format(out_file))
     return 0
+
 
 if __name__ == '__main__':
     sys.exit(main())
